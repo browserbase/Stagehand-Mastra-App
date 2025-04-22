@@ -1,6 +1,9 @@
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 import { stagehandActTool, stagehandObserveTool, stagehandExtractTool } from '../tools';
+import { Memory } from '@mastra/memory';
+
+const memory = new Memory();
 
 export const webAgent = new Agent({
   name: 'Web Assistant',
@@ -24,4 +27,5 @@ export const webAgent = new Agent({
 `,
   model: openai('gpt-4o'),
   tools: { stagehandActTool, stagehandObserveTool, stagehandExtractTool },
+  memory: memory
 });
