@@ -158,15 +158,20 @@ export const stagehandExtractTool = createTool({
   inputSchema: z.object({
     url: z.string().optional().describe('URL to navigate to (optional if already on a page)'),
     instruction: z.string().describe('What to extract (e.g., "extract all product prices")'),
-    schema: z.record(z.any()).describe('Zod schema definition for data extraction'),
+    schema: z.record(z.any()).optional().describe('Zod schema definition for data extraction'),
     useTextExtract: z.boolean().optional().describe('Set true for larger-scale extractions, false for small extractions'),
   }),
   outputSchema: z.any().describe('Extracted data according to schema'),
   execute: async ({ context }) => {
+    // Create a default schema if none is provided
+    const defaultSchema = {
+      content: z.string()
+    };
+    
     return await performWebExtraction(
       context.url, 
       context.instruction, 
-      context.schema,
+      context.schema || defaultSchema,
       context.useTextExtract
     );
   },
@@ -266,18 +271,19 @@ const performWebExtraction = async (
       }
       
       // Extract data
-      if (instruction && schemaObj) {
+      if (instruction) {
         console.log(`Extracting with instruction: ${instruction}`);
-        console.log(`Schema:`, JSON.stringify(schemaObj));
         
-        // Convert schema object to Zod schema
-        const schema = z.object(schemaObj);
+        // Create a default schema if none is provided from Mastra Agent
+        const finalSchemaObj = schemaObj || { content: z.string() }; 
         
         try {
+          const schema = z.object(finalSchemaObj);
+          
           const result = await page.extract({
             instruction,
             schema,
-            useTextExtract,
+            useTextExtract
           });
           
           console.log(`Extraction successful:`, result);
